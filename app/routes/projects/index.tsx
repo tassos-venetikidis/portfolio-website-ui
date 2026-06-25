@@ -25,16 +25,28 @@ export async function loader({
 }
 
 function ProjectsPage({ loaderData }: Route.ComponentProps) {
-  const { projects } = loaderData as { projects: Project[] };
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
-
   const projectsPerPage = 4;
 
-  const totalPages = Math.ceil(projects.length / projectsPerPage);
+  const { projects } = loaderData as { projects: Project[] };
+
+  // Get unique categories
+  const categories: Set<string> = new Set();
+  categories.add("All");
+  projects.forEach((project) => categories.add(project.category));
+
+  // Filter projects based on the category
+  const filteredProjects =
+    selectedCategory === "All"
+      ? projects
+      : projects.filter((project) => project.category === selectedCategory);
+
+  const totalPages = Math.ceil(filteredProjects.length / projectsPerPage);
 
   const pageStartProjectsIndex = (currentPage - 1) * projectsPerPage;
   const pageEndProjectsIndex = pageStartProjectsIndex + projectsPerPage;
-  const currentPageProjects = projects.slice(
+  const currentPageProjects = filteredProjects.slice(
     pageStartProjectsIndex,
     pageEndProjectsIndex,
   );
@@ -42,6 +54,20 @@ function ProjectsPage({ loaderData }: Route.ComponentProps) {
   return (
     <>
       <h2 className="text-3xl font-bold text-white mb-8">🚀 Projects</h2>
+      <div className="flex flex-wrap gap-2 mb-8">
+        {Array.from(categories).map((category, idx) => (
+          <button
+            key={idx}
+            className={`px-3 py-1 rounded text-sm cursor-pointer ${selectedCategory === category ? "bg-blue-600 text-white" : "bg-gray-700 text-gray-200"}`}
+            onClick={() => {
+              setSelectedCategory(category);
+              setCurrentPage(1);
+            }}
+          >
+            {category}
+          </button>
+        ))}
+      </div>
       <div className="grid gap-6 sm:grid-cols-2">
         {currentPageProjects.map((project) => (
           <ProjectCard key={project.id} project={project} />
